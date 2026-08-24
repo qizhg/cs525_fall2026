@@ -1,0 +1,353 @@
+\newcommand{\Regret}{\operatorname{Regret}}
+
+
+\title{Lecture 3a: RL Setting, Multi-Armed Bandit}
+
+% \author{Qi Zhang}
+% \date{Last Updated: October 2025}
+
+\section{The RL Setting}
+In the previous lectures, we focused on two problem settings:
+the planning setting where the (finite-horizon) MDP of interest $M=(\mathcal{S},\mathcal{A}, P, R, H)$ is fully known and we aim to compute an optimal policy for it,
+and the generative model setting where $(P,R)$ is unknown but can be queried for any state-action pair multiple times, and we aim to find an (near-)optimal policy after querying as few times as possible.
+
+Obviously, the generative model setting relaxes the requirements for planing. 
+In this note, we introduce the reinforcement learning (RL) setting that is even more relaxed:
+$(P,R)$ is unknown and cannot be queried as a generative model; instead, we can only access them through the agent-environment interactions, i.e., {\em actually} taking actions and observing the corresponding next states and rewards, which is described below:
+\begin{protocol}
+\caption{MDP interaction (finite-horizon)} \label{protocol:MDP interaction}
+\begin{algorithmic}[1]
+\For{episode $k=1,\ldots,K$}
+    \State learner observes  initial state $s_1$ sampled by environment; 
+    \For{timestep $h=1,\ldots,H$}
+        \State learner takes action $a_h$; \Comment{by an RL algorithm} \label{protocol:MDP interaction:line:RL algorithm}
+        \State learner observes next state $s_{h+1}$ and reward $r_h$ sampled by environment;
+    \EndFor
+\EndFor
+\end{algorithmic}
+\end{protocol}
+
+In Protocol \ref{protocol:MDP interaction}, the agent is referred to as the learner to emphasize the fact that we are in the RL setting.
+The interaction is repeated over episodes (indexed by $k$) in this finite-horizon case, and similar interaction protocols exist for the infinite-horizon case.
+
+\paragraph{RL algorithm.}
+A so-called {\em RL algorithm} essentially chooses the action to take at each timestep (line \ref{protocol:MDP interaction:line:RL algorithm});
+all other lines are simply the learner observing information revealed by the environment.
+In general, the learner adaptively chooses the actions based on all previous information, i.e., the decision of $a_h$ in episode $k$ is based on
+\begin{align*}
+    \underbrace{(s^{1:k-1}_{1:H},a^{1:k-1}_{1:H},r^{1:k-1}_{1:H})}_{\text{the previous $k-1$ episodes}}
+    \quad \text{and } \underbrace{(s^k_1,a^k_1,r^k_1,\ldots,s^k_{h-1},a^k_{h-1},r^k_{h-1}, s^k_h)}_{\text{the in-episode transitions up to the current state}}
+\end{align*}
+where the superscript indexes the episodes.
+
+\paragraph{RL evaluation.}
+Protocol \ref{protocol:MDP interaction} induces two alternative evaluation criteria for RL algorithms, both of which have been extensively studied:
+\begin{itemize}
+    \item {\em Exploration-exploitation.}
+    The first measures the total rewards gathered {\em within} the $K$ episodes.
+    Under this criterion, the learner is asked to balance between doing state-action pairs that are less tried (exploration) and redoing the state-action pairs that have been most promising so far (exploitation).
+
+    \item {\em Pure exploration.}
+    The second ignores the rewards gathered in these episodes; instead, it further asks the learner to recommend a policy by the end of the interaction and measures the quality of that policy.
+    Under this criterion, the learner is asked to gather high quality information within the interaction budget in order to recommend a best possible policy. 
+\end{itemize}
+For both criteria, the performance of an RL algorithm hinges on how efficiently it explores the environment through its action selection.
+
+\section{Multi-Armed Bandits}
+Designing and analyzing RL algorithms for full-width MDPs is non-trivial.
+Many of the challenges, especially those related to exploration, also manifest in simplified MDP instances known as Multi-Armed Bandits (MABs).
+A MAB can be viewed as an MDP with a horizon of $H=1$ and a single state, so the state transition function is out of the picture.
+To make the problem non-trivial, we consider the case where the reward upon taking each action is random.
+
+Therefore, with an abuse of notation (to respect the convention), a MAB can be specified by some $K$ real-valued distributions, $\{R_i\}_{i=1}^K$, i.e., the stochastic reward function for $K$ actions or {\em arms}.
+Each $R_i$ is assumed to have bounded support $[0,1]$ and let $\mu_i$ denote its mean.
+Accordingly, Protocol \ref{protocol:MDP interaction} reduces to:
+\begin{protocol}
+\caption{MAB interaction} \label{protocol:MAB interaction}
+\begin{algorithmic}[1]
+\For{round $t=1,\ldots,T$}
+    \State learner chooses an arm $i_t\in[K]$ \Comment{chosen by an MAB {\em algorithm}};
+    \State learner observes reward $r_t\sim R_{i_t}$ \Comment{sampled {\em independently}};
+\EndFor
+\end{algorithmic}
+\end{protocol}
+
+
+We use the following notations regarding an MAB:
+\begin{align*}
+    &K    && \text{number of arms/actions}\\
+    &R_i  && \text{reward distribution number of arm $i$}\\
+    &\mu_i && \text{mean of $R_i$}\\
+    &\mu^* := \textstyle \max_{i\in[K]}\mu_i && \text{mean of best arm}\\
+    &\Delta_i := \mu^* - \mu_i && \text{suboptimality of arm $i$}\\
+    &T    && \text{total number of rounds}\\
+    &i_t    && \text{arm played at round $t$}\\
+    &r_t\sim R_{i_t}    && \text{reward received at round $t$}\\ 
+    &N_{i,t}:=\textstyle\sum_{s=1}^t \mathbb{I}\left\{i_s=i\right\}    && \text{number of times arm $i$ has been played by end of round $t$}\\
+    &\hat{\mu}_{i,t}:=\tfrac{1}{N_{i,t}} \textstyle\sum_{s=1}^t \mathbb{I}\left\{i_s=i\right\} r_s    && \text{average reward received from arm $i$ by end of round $t$}
+\end{align*}
+For MAB, the exploration-exploitation criterion reduces to maximizing the total reward within the $T$ rounds, or equivalently, minimizing the {\em regret}:
+\begin{align}
+\label{eq:regret}
+\Regret(T) :=  \textstyle\sum_{t=1}^T (\mu^*-r_t) =T\mu^* - \textstyle\sum_{t=1}^Tr_t
+\end{align}
+Intuitively, the regret measures difference between the learner's reward and the expected reward by playing the best arm per round, summed over $T$ rounds for $\Regret(T)$.
+
+In contrast, the pure exploration criterion is formalized by minimizing
+\begin{align*}
+\Delta_{\hat{i}} = \mu^{*}-\mu_{\hat{i}}
+\end{align*}
+where $\hat{i}$ is the arm that the learner {\em recommends} after $T$ or a certain number of rounds.
+
+Both $\Regret(T)$ and $\Delta_{\hat{i}}$ are random variables because the arms $i_t$ are chosen with randomness and the individual rewards are sampled from distributions $R_{i_t}$. 
+We typically consider their expectation ($\E[\Regret(T)]$) or provide high probability guarantees.
+The theoretical analyses of MAB algorithms often care about the asymptotical behavior of the regret as a function of $T$, i.e., how quickly the regret increases as $T$ increases.
+
+We next describe some classical algorithms and analyze their regret.
+
+\subsection{$\epsilon$-greedy}
+The {\em $\epsilon$-greedy} algorithm is a simple way to balance exploration vs exploitation.
+At round $t$, w.p.~(with probability) $\epsilon$ the learner chooses a random arm; w.p.~$1-\epsilon$ the learner chooses the empirically best arm:
+\begin{align*}
+    &i_t \sim {\rm Uniform}([K]) \text{ w.p. $\epsilon$} 
+    \quad \text{and} \quad 
+    i_t =\textstyle\argmax_{i\in[K]}~\hat{\mu}_{i,t-1} \text{ w.p. $1-\epsilon$}.
+\end{align*}
+Here, $\epsilon$ is a constant.
+Because the learner picks the worst arm, $\underline{i}:=\argmin \mu_i$, w.p.~at least $\epsilon/K$ every round, the expected regret is lower bounded as 
+\begin{align}
+\label{eq:epsilon_greedy-regret}
+    \E[\Regret(T)] \geq (\mu^*-\mu_{\underline{i}})\frac{\epsilon}{K}T
+\end{align}
+which scales linearly with $T$.
+
+\subsection{Explore-then-commit}
+A simple idea is to try each arm multiple times and then favor the empirically best one.
+\paragraph{Exploration by uniform sampling.}
+Suppose we play each arm $n$ times with $n$ being a predefined positive integer. Let $\hat{\mu}_{i}$ be the average reward of arm $i$ over the $n$ plays.
+By Hoeffding's inequality (recall that the rewards are bounded in $[0,1]$),  we have, for any $\epsilon>0$,
+\begin{align}
+\label{eq:Hoeffding}
+    \Pr\big(\underbrace{\abs{\hat{\mu}_i-\mu_i} \geq \epsilon}_{=:B_i(\epsilon)}\big) \leq 2 e^{-2 n \epsilon^2}.
+\end{align}
+We define the {\em $\epsilon$-bad event} to be the event where $B_i(\epsilon)$ occurs for {at least} one arm $i$, i.e.,
+\begin{align*}
+    \text{$\epsilon$-bad event} := \textstyle\bigcup_{i\in[K]} B_i(\epsilon).
+\end{align*}
+By the union bound, we have
+\begin{align*}
+  \Pr(\text{$\epsilon$-bad event}) 
+= \Pr\left(\textstyle\bigcup_{i\in[K]}B_i(\epsilon)\right) 
+\leq \textstyle\sum_{i\in[K]} \Pr(B_i(\epsilon))
+\leq 2K e^{-2 n \epsilon^2}
+\end{align*}
+where the last inequality is due to \eqref{eq:Hoeffding}.
+
+Let the {\em $\epsilon$-clean event} to be the complement of the $\epsilon$-bad event, i.e.,
+\begin{align*}
+\text{
+$\epsilon$-clean event: $\abs{\hat{\mu}_i-\mu_i} < \epsilon$ for {\em all} arms $i\in[K]$
+}
+\end{align*}
+so we have 
+\begin{align}
+\label{eq:clean event}
+    \Pr(\text{$\epsilon$-clean event})  = 1-\Pr(\text{$\epsilon$-bad event}) \geq 1- 2K e^{-2 n \epsilon^2}.
+\end{align}
+
+
+\paragraph{Exploitation by committing.}
+Let $\hat{i}:=\argmax_{i\in[K]} \hat{\mu}_{i}$ be the empirically best arm after trying each arm $n$ times.
+Intuitively, when $n$ is large, the suboptimality of $\hat{i}$, $\Delta_{\hat{i}}=\mu^* - \mu_{\hat{i}}$, should be small with high probability.
+We can make this argument formal.
+Letting $i^*:=\argmax_{i\in[K]} {\mu}_{i}$ be the actual best arm, decompose the suboptimality as 
+\begin{align*}
+    \Delta_{\hat{i}} = 
+\mu_{i^*}-\mu_{\hat{i}} =\underbrace{\mu_{i^*}-\hat{\mu}_{i^*}}_{{\rm (i)}}+\underbrace{\hat{\mu}_{i^*}-\hat{\mu}_{\hat{i}}}_{\leq 0}+\underbrace{\hat{\mu}_{\hat{i}}-\mu_{\hat{i}}}_{\rm (ii)}
+\leq {\rm (i)}+{\rm (ii)}
+.
+\end{align*}
+% Under the $\frac{\epsilon}{2}$-clean event, we have both ${\rm (i)},{\rm (ii)}<\frac{\epsilon}{2}$ and therefore $\Delta_{\hat{i}}\leq{\rm (i)}+{\rm (ii)}<\epsilon$.
+% This gives a lower bound on the probability of $\Delta_{\hat{i}}$ being small:
+Therefore, we have
+\begin{align}
+\label{eq:Delta_hat_i}
+    \Pr(\Delta_{\hat{i}}<\epsilon) \geq \Pr\big(\text{$\tfrac{\epsilon}{2}$-clean event}\big) \geq 1 - 2K e^{-\frac{n \epsilon^2}{2}}
+\end{align}
+\underline{\em For Homework 3's 1a, provide a justification for \eqref{eq:Delta_hat_i}.}
+% where the last inequality is due to \eqref{eq:clean event}.
+
+
+\paragraph{Regret analysis.}
+In the {\em explore-then-commit} algorithm, the learner chooses some integer $n$; it plays each arm $n$ times in the first $nK$ rounds and then commits to playing the empirically best arm $\hat{i}$ in the rest $(T-nK)$ rounds.
+The analysis above facilitates the following way to decompose the expected regret based on whether event $\Delta_{\hat{i}}<\epsilon$ occurs or not.
+The rational is that, conditioned on $\Delta_{\hat{i}}<\epsilon$, committing to $\hat{i}$ for the last $(T-nK)$ rounds incurs small regret; otherwise, the regret will be large but it happens with the small probability of $\Pr(\Delta_{\hat{i}}\geq \epsilon)$.
+Formalizing this, we have
+\begin{align}
+\label{eq:explore_then_commit-regret_decomposition}
+\E[\Regret(T)]=\E[\Regret(T)\mid\Delta_{\hat{i}}<\epsilon] \Pr(\Delta_{\hat{i}}<\epsilon)+\E[\Regret(T)\mid\Delta_{\hat{i}}\geq\epsilon] \Pr(\Delta_{\hat{i}}\geq\epsilon)
+\end{align}
+where 
+\begin{align*}
+    &\E[\Regret(T)\mid\Delta_{\hat{i}}<\epsilon] \leq 1 \cdot nK+\epsilon(T-nK) &&\text{(regret $\leq1$ per round during exploration)}\\
+    &\Pr(\Delta_{\hat{i}}<\epsilon) \leq 1\\
+    &\E[\Regret(T)\mid\Delta_{\hat{i}}\geq\epsilon]  \leq 1\cdot T &&\text{(regret $\leq1$ per round)}\\
+    &\Pr(\Delta_{\hat{i}}\geq\epsilon)\leq 2K e^{-\frac{n \epsilon^2}{2}} &&\text{(due to \eqref{eq:Delta_hat_i})}
+\end{align*}
+and therefore 
+\begin{align*}
+    \E[\Regret(T)]\leq (1-\epsilon)nK + T\epsilon + T\cdot2K e^{-\frac{n \epsilon^2}{2}}=:g(n,\epsilon)
+    .
+\end{align*}
+Here, the bound above holds for any $\epsilon>0$ and any integer $n>0$ such that $nK\leq T$.
+Ideally, we hope to find a realization of $(n,\epsilon)$ such that $g(n,\epsilon)$ is minimized.
+However, because a closed-form minimizer is hard to obtain, we choose a realization of $(n,\epsilon)$ (which would depend on $T$) so $g(n,\epsilon)$ scales with $T$ moderately, e.g., {\em sublinearly} if $g(n,\epsilon) = O(T^\alpha)$ for some $0<\alpha<1$.
+To achieve sublinear scaling, let's try making the last term of $g(n,\epsilon)$ a $O(1)$ term with respect to $T$, i.e., by setting
+\begin{align}
+\label{eq:explore_then_commit-failure}
+    -\tfrac{n \epsilon^2}{2} = -\ln T 
+    \quad\text{so that}\quad T\cdot2K e^{-\frac{n \epsilon^2}{2}} = T\cdot2K e^{-\ln T} = T\cdot2K\cdot T^{-1} = 2K.
+\end{align}
+Equivalently, we should set $\epsilon=\sqrt{\tfrac{2\ln T}{n}}$, with $n$ to be chosen later.
+With this, we have the first two terms of $g(n,\epsilon)$ as 
+\begin{align*}
+    (1-\epsilon)nK + T\epsilon \leq nK + T\epsilon = nK + T\sqrt{\tfrac{2\ln T}{n}} =: g_1(n)
+\end{align*}
+where the first inequality amplifies $(1-\epsilon)$ to $1$, which turns out to be tolerable.
+Minimizing $g_1(n)$, e.g., by setting derivative $g_1'(n)=0$, we choose $n$ as 
+\begin{align}
+\label{eq:explore_then_commit-n}
+    n=\left(\frac{T^2\ln T}{2K^2}\right)^{\frac{1}{3}}
+\end{align}
+which gives $g_1(n) = O\left(K^{\frac{1}{3}}T^{\frac{2}{3}}(\ln T)^{\frac{1}{3}}\right)$, and therefore we have the sublinear bound
+\begin{align}
+\label{eq:explore_then_commit-regret}
+\E[\Regret(T)] \leq  g_1(n) + 2K = O\left(K^{\frac{1}{3}}T^{\frac{2}{3}}(\ln T)^{\frac{1}{3}}\right)
+\end{align}
+for the explore-then-commit algorithm.
+
+It is not unclear if we can obtain bounds that scale better with $T$, for example, by setting  $(n,\epsilon)$ differently in \eqref{eq:explore_then_commit-failure} (e.g., $-\tfrac{n \epsilon^2}{2}=\ln{T^{-\beta}}$). 
+
+\subsection{UCB}
+We now introduce an algorithm that employs the principle of {\em optimism in the face of uncertainty} for strategic exploration, which favors actions/arms that we are less certain about.
+As we do so, the less certain actions/arms will be better explored and their values/rewards will become more and more certain.
+For MABs, the Upper Confidence Bound (UCB) algorithm implements this idea by, again, the Hoefflindg's inequality, which also enjoys a regret bound better than that of explore-then-commit \eqref{eq:explore_then_commit-regret}.
+
+Assume that the rewards are bounded in $[0,1]$.
+% If $\hat{\mu}_{i}$ is the average reward of arm $i$ over $n$ plays of it, by (one-side) Hoeffding's inequality we have
+If $\hat{\mu}_{i}$ is the average reward of arm $i$ over $n$ plays of it, we have
+\begin{align}
+\label{eq:Hoeffding_upper}
+    \Pr\big(\hat{\mu}_i-\mu_i \leq -\epsilon\big) \leq e^{-2 n \epsilon^2}
+\end{align}
+\underline{\em For Homework 3's 1b, provide a justification for \eqref{eq:Hoeffding_upper}.}
+
+Here, we omit the other one-side inequality, because UCB uses the one above to form a high-probability upper bound of the true mean: rewriting \eqref{eq:Hoeffding_upper} we have $\Pr\big(\hat{\mu}_i+ \epsilon \leq -\mu_i \big) \leq e^{-2 n \epsilon^2}$, or equivalently, by setting $\delta=e^{-2 n \epsilon^2}$ we have
+\begin{align}
+\label{eq:upper_confidence_bound}
+    \Pr\left(\hat{\mu}_i+ \epsilon(n,\delta) \leq \mu_i \right) \leq \delta \quad \text{where } \epsilon(n,\delta):=\sqrt{\tfrac{\ln{(1/\delta)}}{2n}}
+\end{align}
+In words, w.p~$\geq 1-\delta$ (i.e., with high confidence),  $\hat{\mu}_i+ \epsilon(n,\delta)$ is an upper bound of the true mean $\mu_i$.
+The UCB algorithm selects the arm with the highest upper confidence bound given above: for round $t=1,2,\ldots,T$,
+\begin{align}
+\label{eq:UCB}
+   i_t:=\argmax_{i \in[K]}~ \underbrace{\hat{\mu}_{i, t-1}+B_i(\delta_t)}_{=:{\rm UCB}_{i, t}} \text{ where }
+   B_i(\delta_t):= \epsilon(N_{i,t-1}, \delta_t) = \sqrt{\tfrac{\ln{(1/\delta_t)}}{2N_{i,t-1}}}
+   .
+\end{align}
+Recall that $N_{i,t-1}$ is number of times arm $i$ has been played by end of round $t-1$ and $\hat{\mu}_{i,t-1}$ is the corresponding empirical mean.
+Here, we let the confidence level $\delta_t$ depend on round number $t$ and potentially $T$ and $K$ as well.
+We next detail how to choose $\delta_t$ to obtain a $O(\sqrt{T})$ regret bound (which is better than \eqref{eq:explore_then_commit-regret}).
+
+To analyze the regret of the UCB algorithm \eqref{eq:UCB}, we use the similar recipe as \eqref{eq:explore_then_commit-regret_decomposition} to decompose the expected regret conditioned on some good/bad event.
+The bad event is when the empirical means are far off the true mean, which happens with small probability due to Hoeffding's.
+However, as a difference from explore-then-commitment, in UCB the number of plays $N_{i,t-1}$ is a random variable that depends on previous plays, whereas explore-then-commitment uses a predefined constant $n$ for exploration.
+This difference is crucial because Hoeffding's only applies when the number of samples $n$ is a constant:
+\begin{align*}
+    \Pr\big(\underbrace{\abs{\hat{\mu}_{i, t-1}-\mu_i} \geq B_i(\delta_t) \text { where $N_{i, t-1}=n$ for constant $n$}}_{\text{bad event $E_{i,t}^n$}}\big) \leq 2 \delta_t
+\end{align*}
+Here, the bad event $E_{i,t}^n$ is when arm $i$ has been played exactly $n$ times by end of round $t-1$ (i.e., $N_{i, t-1}=n$) and the empirical mean is far off.
+% By the union bound over $N_{i, t-1}=n\in\{0,1,\ldots,t-1\}$, we can bound the probability of the general bad event:
+We can then bound the probability of the general bad event:
+\begin{align}
+\label{eq:UCB-bad_event}
+    \Pr\big(\underbrace{\abs{\hat{\mu}_{i, t-1}-\mu_i} \geq B_i(\delta_t)}_{=:E_{i,t}} \big)\leq 2t\delta_t
+    .
+\end{align}
+\underline{\em For Homework 3's 1c, provide a justification for \eqref{eq:UCB-bad_event}} (Hint: Use the union bound over all possible values that $N_{i, t-1}=n$ can take).
+
+Then, by the union bound over all $i\in[K]$ and $t\in[T]$, we can bound the probability of our {\em unclean} event:
+\begin{align*}
+    \Pr\big(\underbrace{\abs{\hat{\mu}_{i, t-1}-\mu_i} \geq B_i(\delta_t) \text{ for any } i\in[K], t\in[T]}_{=:\text{unclean event}} \big) \leq \sum_{i=1}^{K}\sum_{t=1}^{T}2t\delta_t = 2K \sum_{t=1}^{T}t\delta_t
+    .
+\end{align*}
+The corresponding {\em clean} event is the complement of unclean:
+\begin{align*}
+\text{
+clean event: $\abs{\hat{\mu}_i-\mu_i} < B_i(\delta_t)$ for {\em all} $i\in[K], t\in[T]$. 
+}    
+\end{align*}
+
+From now on, we try setting $\delta_t=\delta$ which, to be chosen carefully, does not depend on round number $t$ but can potentially depend on $T$ and/or $K$.
+The probability of unclean is then bounded as
+\begin{align*}
+    \Pr({\rm unclean}) \leq 2K \textstyle\sum_{t=1}^{T}t\delta_t = 2K\delta \sum_{t=1}^{T}t \leq 2KT^2\delta
+    .
+\end{align*}
+
+For the unclean event, its contribution the expected regret can therefore be bounded as
+\begin{align*}
+    \E[\Regret(T) | {\rm unclean}] \cdot \Pr({\rm unclean})
+    \leq (1\cdot T) \cdot 2KT^2\delta =  2KT^3\delta
+    .
+\end{align*}
+We would like the bound above to scale as $O(T^{-\alpha})$ for some $\alpha\geq0$.
+We here choose $\alpha=1$ by setting 
+\begin{align}
+\label{eq:UCB-unclean}
+    \delta=\frac{1}{T^4},
+    \text{ so that }
+    \E[\Regret(T) | {\rm unclean}] \cdot \Pr({\rm unclean}) \leq 2KT^{-1}
+\end{align}
+while other choices such as $\alpha=0$ like in  \eqref{eq:explore_then_commit-failure} should also work. 
+
+For the clean event, we simply bound $\Pr({\rm clean})\leq1$ and decompose the regret per round as 
+\begin{align*}
+\E[\Regret(T) | {\rm clean}] = \E\left[\textstyle\sum_{t=1}^{T} (\mu^*-r_t) \mid {\rm clean}\right] = 
+\E\left[\textstyle\sum_{t=1}^{T} (\mu^*-\mu_{i_t}) \mid {\rm clean}\right]
+\end{align*}
+Here, the second equality is intuitively straightforward but requires a rigorous proof using the law of total expectation which we omit here.
+Conditioned on the clean event, we bound the per step regret as 
+\begin{align}
+\label{eq:UCB-regret_decomposition}
+   \mu^*-\mu_{i_t} = \mu_{i^*}-\mu_{i_t} \leq  {\rm UCB}_{i^*,t} - \mu_{i_t}
+   \leq {\rm UCB}_{i_t,t} - \mu_{i_t}
+   = B_{i_t}(\delta_t)
+   = \sqrt{\tfrac{2\ln T}{N_{i_t,t-1}}}
+\end{align}
+where in the last equality we set $\delta_t=\delta=\frac{1}{T^4}$.
+
+\underline{\em For Homework 3's 1d, provide a justification for the two inequalities in \eqref{eq:UCB-regret_decomposition}}.
+
+Note the bound is vacuous when $N_{i_t,t-1}=0$. To fix this, note that by the definition, UCB algorithm in \eqref{eq:UCB} will choose each arm once in the first $K$ rounds, as a never-chosen arm has a UCB value of infinity.
+Thus, we can proceed as
+\begin{align*}
+\E[\Regret(T) | {\rm clean}] = &
+\E\left[\textstyle\sum_{t=1}^{K} (\mu^*-\mu_{i_t}) \mid {\rm clean}\right] + \E\left[\textstyle\sum_{t=K+1}^{T} (\mu^*-\mu_{i_t}) \mid {\rm clean}\right] \\
+\leq& 1\cdot K + \E\left[\textstyle\sum_{t=K+1}^{T} \sqrt{\tfrac{2\ln T}{N_{i_t,t-1}}} \mid {\rm clean}\right]
+\end{align*}
+The second term above can be bounded by the following tricks
+\begin{align*}
+\sum_{t=K+1}^{T} \sqrt{\frac{1}{N_{i_t,t-1}}} = \sum_{i=1}^{K}\sum_{m=1}^{N_{i,T-1}}\sqrt{\frac{1}{m}} 
+\leq \sum_{i=1}^{K}  2\sqrt{N_{i,T-1}}\leq 2 \cdot \sqrt{K} \cdot \sqrt{\textstyle\sum_{i=1}^K N_{i,T-1}}
+\leq 2\sqrt{KT}
+\end{align*}
+where 
+the first inequality is due to the ``integral trick'', $\sum_{m=1}^{M}\sqrt{\frac{1}{m}}\leq\int_{x=0}^M x^{-\frac{1}{2}}dx=2\sqrt{M}$;
+the second inequality is due to Cauchy–Schwarz, $\sum_{i=1}^{K}a_i = \langle\,\bvec{1},\bvec{a}\rangle\leq\norm{\bvec{1}}_2\cdot\norm{\bvec{a}}_2$.
+
+Putting it all together, for UCB with $\delta=\frac{1}{T^4}$, its expected regret can be bounded as
+\begin{align*}
+    \E[\Regret(T)] \leq 2KT^{-1} + K + 2\sqrt{2KT\ln T} = O(\sqrt{2KT\ln T})
+    .
+\end{align*}

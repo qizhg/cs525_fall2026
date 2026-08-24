@@ -1,0 +1,133 @@
+\title{Lecture 3b: Taxonomy of RL Algorithms, Q-Learning}
+
+% \author{Qi Zhang}
+% \date{Last Updated: October 2025}
+
+\section{Taxonomy of RL Algorithms}
+In this note, we begin studying RL algorithms.
+We will focus on the infinite-horizon, discounted-reward setting where the MDP is specified by a tuple $M=(\mathcal{S},\mathcal{A},P,R,\gamma)$ with initial state distribution $d_0\in\Delta(\mathcal{S})$.
+The RL agent, or learner, does not know $(P,R)$ a priori and interacts with the MDP following Protocol \ref{protocol:RL interaction}, where the role of the learner's RL algorithm is highlighted in {\color{OliveGreen} green.}
+\begin{protocol}
+\caption{RL interaction (infinite-horizon)} \label{protocol:RL interaction}
+\begin{algorithmic}[1]
+\State {\color{OliveGreen} learner initializes and will maintain its internal state;}
+\Repeat {~over episodes:}
+    \State learner observes initial state $s_0\sim d_0$ of the current episode; 
+    \For{$h=1,\ldots,H$ until termination or truncation} \Comment{{\color{Gray} truncation: $s_{H+1}$ is not terminal}}
+        \State learner chooses action $a_h$ {\color{OliveGreen} based on its internal state};
+        \label{protocol:RL interaction:line:choose action}
+        \State learner takes $a_h$ and  observes next state $s_{h+1}\sim P(s_h,a_h)$ and reward $r_h=R(s_h,a_h)$;
+        \State {\color{OliveGreen} learner updates its internal state;}
+        \label{protocol:RL interaction:line:update internal state}
+    \EndFor
+\Until{some stopping criterion is met}
+\State learner outputs a policy $\widehat{\pi}$ {\color{OliveGreen} based on its internal state};
+\label{protocol:RL interaction:line:final policy}
+\end{algorithmic}
+\end{protocol}
+
+Crucially, the learner maintains its {\em internal state} that 
+1) gets updated based on the newest transition (line \ref{protocol:RL interaction:line:update internal state})
+and 2) determines the very next action to take (line \ref{protocol:RL interaction:line:choose action}).
+This way, the learner is fully adaptive: in general, it chooses the current action based on all previous transitions.
+The learner's internal state can include some or all of the following components:
+\begin{itemize}
+    \item Value estimates: $V:\mathcal{S}\to\R$, $Q:\mathcal{S}\times\mathcal{A}\to\R$
+    \item Policy/actor:  $\pi:\mathcal{S}\to\Delta(\mathcal{A})$
+    \item Replay buffer: $\mathcal{D}={(s,a,r,s')}$ storing previous transitions
+    \item Model estimate: $(\widehat{P}, \widehat{R})$ that estimates the ground-truth $(P,R)$ based on previous transitions
+\end{itemize}
+RL algorithms are often characterized by what components above are (not) included in the learner's internal state.
+Table \ref{table:A Taxonomy of RL Algorithms} provides a (simplified) taxonomy, although it is usually of little importance to memorize such a table. 
+\begin{table}[tb]
+\centering
+\caption{A Taxonomy of RL Algorithms.}
+\label{table:A Taxonomy of RL Algorithms}
+\begin{tabular}{|l|lll|}
+\hline
+                       & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}Value estimates\\ $V,Q$\end{tabular}} & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}Policy\\ $\pi$\end{tabular}} & \begin{tabular}[c]{@{}l@{}}Model estimate\\ $(\widehat{P}, \widehat{R})$\end{tabular} \\ \hline
+Model-free             & \multicolumn{1}{l|}{-}                                                               & \multicolumn{1}{l|}{-}                                                      & Y                                                                                     \\ \hline
+Model-based            & \multicolumn{1}{l|}{-}                                                               & \multicolumn{1}{l|}{-}                                                      & Y                                                                                     \\ \hline
+Value-based            & \multicolumn{1}{l|}{Y}                                                               & \multicolumn{1}{l|}{N}                                                      & N                                                                                     \\ \hline
+Policy-based           & \multicolumn{1}{l|}{N}                                                               & \multicolumn{1}{l|}{Y}                                                      & N                                                                                     \\ \hline
+Actor-critic           & \multicolumn{1}{l|}{Y}                                                               & \multicolumn{1}{l|}{Y}                                                      & N                                                                                     \\ \hline
+Tabular                & \multicolumn{3}{l|}{Represented by tables, one entry for each $(s)$ or $(s,a)$}                                                                                                                                                                                                                                   \\ \hline
+Function Approximation & \multicolumn{3}{l|}{Represented by generic functions}                                                                                                                                                                                                                                   \\ \hline
+\end{tabular}
+\end{table}
+
+\section{Tabular Q-Learning}
+We now introduce our first RL algorithm, {\em Q-Learning}.
+Its key idea is that, in order to find an optimal policy (by the end of Protocol \ref{protocol:RL interaction} at line \ref{protocol:RL interaction:line:final policy}), it suffices to find out the optimal Q-value $Q^*$ because an optimal policy can be then extracted by acting greedily with respect to it , i.e., $\pi^*(s)=\argmax_{a\in\mathcal{A}} Q^*(s,a)$.
+In Q-learning, the learner's internal state includes only a Q-value estimate $Q:\mathcal{S}\times\mathcal{A}\to\R$ and therefore it is a value-based (and also model-free) RL algorithm.
+The goal of Q-learning is to update $Q$ such that it eventually approximates $Q^*$ well and recommends the outputs the policy as $\widehat{\pi}(s) = \argmax_{a\in\mathcal{A}}Q(s,a)$.
+{\em Tabular} Q-learning represents $Q$ as a table/vector with $|\mathcal{S}\times\mathcal{A}|$ entries, one entry per $(s,a)$ pair, and, upon a transition $(s_t,a_{t},r_t,s_{t+1})$, updates the entry of $(s_t,a_t)$ as
+\begin{align}
+\label{eq:Q-learning}
+Q(s_t,a_t) \gets Q(s_t,a_t) + \alpha_t\left(r_t+\gamma\max_{a\in\mathcal{A}}Q(s_{t+1},a)-Q(s_t,a_t) \right). 
+\end{align}
+Here, the index $t$ is the total number of transitions the learner has experienced in Protocol \ref{protocol:RL interaction}, which keeps increasing across episodes;
+$\alpha_t\in(0,1)$ controls how aggressive the update is, which in general depends on $t$.
+
+To understand why update \eqref{eq:Q-learning} makes sense, recall Q-value iteration: starting with an arbitrary $Q\in\R^{|\mathcal{S}\times\mathcal{A}|}$, update it iteratively as $Q \gets \mathcal{T} Q$ where {\em Bellman optimality operator} $\mathcal{T}:\R^{|\mathcal{S}\times\mathcal{A}|}\to\R^{|\mathcal{S}\times\mathcal{A}|}$ is defined as:
+\begin{align}
+  (\mathcal{T}Q)(s,a) :=&~ R(s,a)+\gamma\E_{s'\sim P(s,a)}\left[\max_{a\in\mathcal{A}}Q(s',a)\right] \label{eq:Bellman_optimality_operator}\\ 
+  \approx &~r+\gamma\max_{a\in\mathcal{A}}Q(s',a) \label{eq:Q-learning-target} 
+\end{align}
+where the $\approx$ approximates the expectation by a single sample of transition $(s,a,r,s')$ with $r=R(s,a)$ and $s'\sim P(s,a)$.
+In the planning setting, we can perform the Q-value iteration and we have the convergence of $\mathcal{T}^kQ\to Q^*$ as $k\in\infty$, where $\mathcal{T}^k$ iteratively applies $\mathcal{T}$ for $k$ times.
+In the RL setting, we cannot perform a full value iteration update $(\mathcal{T}Q)$ because $(P,R)$ is unknown. Instead, upon on a new transition $(s,a,r,s')$, we update $Q(s,a)$ to be closer to the one-sample target \eqref{eq:Q-learning-target}:
+\begin{align*}
+    Q(s,a) \gets (1-\alpha) Q(s,a) + \alpha \left(r+\gamma\max_{a\in\mathcal{A}}Q(s',a)\right)
+    = Q(s,a) + \alpha\left(r+\gamma\max_{a\in\mathcal{A}}Q(s',a)-Q(s,a)\right)
+\end{align*}
+where $\alpha\in(0,1)$ controls how aggressively $Q(s,a)$ is updated to target \eqref{eq:Q-learning-target}.
+Setting $(s,a,r,s')=(s_t,a_t,r_t,s_{t+1})$ and $\alpha=\alpha_t$ in the update above recovers \eqref{eq:Q-learning}.
+
+It turns out that, if the following conditions hold, we have the convergence guarantee of $Q \to Q^*$ as $t\to\infty$:  \begin{itemize}
+    \item Every $(s,a)$ pair is visited infinitely often.
+    \item $\alpha_t$ decreases but not too quickly.
+\end{itemize}
+A formal description of the first condition is 
+$\lim_{t\to\infty}N_t(s,a)=\infty$ for any $(s,a)$, where $N_t(s,a)$ is the number of times $(s,a)$ is visited by $t$.
+This means the learner must do {\em exploration} when choosing actions at line \ref{protocol:RL interaction:line:choose action} in Protocol \ref{protocol:RL interaction}. For example, one can do $\epsilon$-greedy w.r.t.~the current $Q$. 
+A formal description of the second condition is $\sum_t \alpha_t=\infty, \sum_t \alpha_t^2<\infty$ (e.g., $\alpha_t=\frac{1}{t}$ satisfies this).
+
+\section{Deep Q-Network}
+The obvious issue of tabular Q-learning is the difficulty of scaling to large state/action spaces.
+{\em Function approximation} solves this issue by representing the Q-value estimates with a generic function.
+The intuition is that, by updating the Q-value on a specific state-action pair, the changes made to the function will also influence other state-action pairs.
+\begin{protocol}[htb]
+\caption{DQN algorithm} \label{protocol:DQN}
+\begin{algorithmic}[1]
+\State learner initializes parameter $\theta$ of the Q network and sets replay buffer $\mathcal{D}=\{\}$ and target network parameter $\bar{\theta} = \theta$;
+\Repeat {~over episodes:}
+    \State learner observes initial state $s\sim d_0$ of the current episode; 
+    \For{timesteps within the episode}
+        \State learner chooses action $a$ that is $\epsilon$-greedy w.r.t. $Q_{\theta}(s,\cdot)$;
+        \Comment{{\color{Gray}$\epsilon$ usually decreases over time}}
+        \State learner takes $a$ and  observes next state $s'$ and reward $r$;
+        \State learner add $(s,a,r,s')$ to replay buffer $\mathcal{D}$; 
+        \State learner samples a batch of $N$ transitions from $\mathcal{D}$;
+        \State learner takes a gradient step minimizing $L(\theta)$;
+        \State learner sets $\bar{\theta} \gets \theta$ every $c$ updates of $\theta$; \Comment{{\color{Gray}updates target network periodically}}
+    \EndFor
+\Until{some stopping criterion is met}
+\State learner outputs a policy $\widehat{\pi}$ as the greedy policy w.r.t.~$Q_\theta$;
+\end{algorithmic}
+\end{protocol}
+
+A representative work is {\em Deep Q-Network} (DQN), where the Q-value estimates is represented using a neural network, $Q_\theta:\mathcal{S}\times\mathcal{A}\to\R$ where $\theta$ is the neural network's parameters.
+Although people tried neural networks for Q-learning before DQN, those prior efforts updated the parameters on the most recent transition, in a similar fashion as in tabular Q-learning, and observed limited success due to 
+DQN improved the training (i.e., parameters updating) of the networks with the following innovations:
+\begin{itemize}
+    \item It stores the past transitions in a memory, often referred to as {\em replay buffer}, $\mathcal{D}=\{(s,a,r,s')\}$.
+    \item On a given transition $(s,a,r,s')$, it forms target \eqref{eq:Q-learning-target} using another network $Q_{\bar{\theta}}$, which is of the same structure as $Q_{\theta}$ but with its parameter $\bar{\theta}$ updated more slowly than $\theta$.
+    \item To update $\theta$, it samples a batch of transitions from the replay buffer and update $\theta$ with a single gradient step to reduce the Q-value estimates with the formed target values.
+\end{itemize}
+This leads to the following loss function for network $Q_\theta$:
+\begin{align*}
+    L(\theta) = \frac{1}{N}\sum_{i=1}^{N} \left( Q_\theta(s_i,a_i) - \big(r_i+\gamma \max_{a\in\mathcal{A}} Q_{\bar{\theta}}(s'_i, a)\big) \right)^2
+    \quad \text{where }
+    (s_i,a_i,r_i,s'_i)\sim\mathcal{D} \text{ for } i=1,\ldots,N.
+\end{align*}
