@@ -29,12 +29,12 @@ Read and modify the provided hw1.ipynb file to implement the following functions
 \item {[2 points]} Method \texttt{solve\_bellman\_optimality\_equation} in class \texttt{FiniteHorizonMDPPlanner}.
 \item {[2 points]} Method \texttt{get\_transition} in class \texttt{FiniteHorizonCombinationLock}.
 \end{enumerate}
-Do not modify any things other than the functions above. 
-The original hw1.ipynb file provides a test at the end, which only serves as a reference for grading.
+Do {\em not} modify any things other than the functions above. 
+The original hw1.ipynb file provides a test at the end, which serves as a reference, {\em not} a strict rubric, for grading.
 
 \section{The Infinite-Horizon Setting}
 In our class and lecture1.pdf, we have focused only on the finite-horizon setting.
-An alternative (and perhaps even more popular) setting is the infinite-horizon discounted-reward setting, where an MDP is specified by tuple $M=(\mathcal{S}, \mathcal{A}, P, R, \gamma)$, where $\mathcal{S}$, $\mathcal{A}$, $P$, $R$ are still the state space, the action space, the transition function, and the reward function, respectively; $\gamma\in[0,1)$ is the {\em discounting factor} that replaces horizon $H$ in the finite-horizon setting. 
+An alternative (and equally popular, if not more) setting is the infinite-horizon discounted-reward setting, where an MDP is specified by tuple $M=(\mathcal{S}, \mathcal{A}, P, R, \gamma)$, where $\mathcal{S}$, $\mathcal{A}$, $P$, $R$ are still the state space, the action space, the transition function, and the reward function, respectively; $\gamma\in[0,1)$ is the {\em discounting factor} that replaces horizon $H$ in the finite-horizon setting. 
 In this setting, we usually assume $P$ and $R$ are stationary, i.e., they remain the same for different timesteps, and as a result, we can drop the subscript $h$.
 The agent starts at some state $s_1$; at each time step $h=1,2, \ldots$, the agent takes an action $a_h \in \mathcal{A}$, obtains the immediate reward $r_h=R\left(s_h, a_h\right)$, and observes the next state $s_{h+1}$ sampled from $P\left(s_h, a_h\right)$.
 
