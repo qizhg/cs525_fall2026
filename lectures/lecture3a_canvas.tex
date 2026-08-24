@@ -174,7 +174,7 @@ Therefore, we have
 \label{eq:Delta_hat_i}
     \Pr(\Delta_{\hat{i}}<\epsilon) \geq \Pr\big(\text{$\tfrac{\epsilon}{2}$-clean event}\big) \geq 1 - 2K e^{-\frac{n \epsilon^2}{2}}
 \end{align}
-\underline{\em For Homework 3's 1a, provide a justification for \eqref{eq:Delta_hat_i}.}
+\underline{\em For Homework 2's 2a, provide a justification for \eqref{eq:Delta_hat_i}.}
 % where the last inequality is due to \eqref{eq:clean event}.
 
 
@@ -240,7 +240,7 @@ If $\hat{\mu}_{i}$ is the average reward of arm $i$ over $n$ plays of it, we hav
 \label{eq:Hoeffding_upper}
     \Pr\big(\hat{\mu}_i-\mu_i \leq -\epsilon\big) \leq e^{-2 n \epsilon^2}
 \end{align}
-\underline{\em For Homework 3's 1b, provide a justification for \eqref{eq:Hoeffding_upper}.}
+\underline{\em For Homework 2's 2b, provide a justification for \eqref{eq:Hoeffding_upper}.}
 
 Here, we omit the other one-side inequality, because UCB uses the one above to form a high-probability upper bound of the true mean: rewriting \eqref{eq:Hoeffding_upper} we have $\Pr\big(\hat{\mu}_i+ \epsilon \leq -\mu_i \big) \leq e^{-2 n \epsilon^2}$, or equivalently, by setting $\delta=e^{-2 n \epsilon^2}$ we have
 \begin{align}
@@ -274,7 +274,7 @@ We can then bound the probability of the general bad event:
     \Pr\big(\underbrace{\abs{\hat{\mu}_{i, t-1}-\mu_i} \geq B_i(\delta_t)}_{=:E_{i,t}} \big)\leq 2t\delta_t
     .
 \end{align}
-\underline{\em For Homework 3's 1c, provide a justification for \eqref{eq:UCB-bad_event}} (Hint: Use the union bound over all possible values that $N_{i, t-1}=n$ can take).
+\underline{\em For Homework 2's 2c, provide a justification for \eqref{eq:UCB-bad_event}} (Hint: Use the union bound over all possible values that $N_{i, t-1}=n$ can take).
 
 Then, by the union bound over all $i\in[K]$ and $t\in[T]$, we can bound the probability of our {\em unclean} event:
 \begin{align*}
@@ -327,7 +327,7 @@ Conditioned on the clean event, we bound the per step regret as
 \end{align}
 where in the last equality we set $\delta_t=\delta=\frac{1}{T^4}$.
 
-\underline{\em For Homework 3's 1d, provide a justification for the two inequalities in \eqref{eq:UCB-regret_decomposition}}.
+\underline{\em For Homework 2's 2d, provide a justification for the two inequalities in \eqref{eq:UCB-regret_decomposition}}.
 
 Note the bound is vacuous when $N_{i_t,t-1}=0$. To fix this, note that by the definition, UCB algorithm in \eqref{eq:UCB} will choose each arm once in the first $K$ rounds, as a never-chosen arm has a UCB value of infinity.
 Thus, we can proceed as
