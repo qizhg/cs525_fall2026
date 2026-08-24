@@ -1,0 +1,65 @@
+%%% Spacing
+\usepackage{titlesec}
+\setlength{\parskip}{5pt} % next-line paragraph
+\setlength{\parindent}{0pt} % next-line paragraph
+\renewcommand{\baselinestretch}{1.03} % linespacing
+\titlespacing{\section}{0pt}{\parskip}{\parskip}
+\titlespacing{\subsection}{0pt}{\parskip}{.5\parskip}
+\titlespacing{\subsubsection}{0pt}{\parskip}{.0\parskip}
+\titlespacing{\paragraph}{0pt}{2\parskip}{5pt}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{subcaption}
+\usepackage{mathtools}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{hhline}
+\usepackage{wrapfig}
+\usepackage{enumitem}
+\usepackage{soul}
+
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\usepackage{url}
+\def\UrlBreaks{\do\/\do-}
+
+
+\usepackage[dvipsnames]{xcolor}
+% \usepackage{hyperref}
+\let\oldemptyset\emptyset
+\DeclareMathOperator{\R}{\mathbb{R}}
+\DeclareMathOperator{\E}{\mathbb{E}}
+
+\newcommand{\bvec}[1]{\mathbf{#1}}
+\newcommand\abs[1]{\left\lvert#1\right\rvert}
+\newcommand\norm[1]{\left\lVert#1\right\rVert}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\maximize}{maximize}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{property}{Property}
+
+\theoremstyle{definition}
+\newtheorem{assumption}{Assumption}
+\newtheorem{definition}{Definition}
+
+\newcommand{\todo}[1]{\textcolor{orange}{#1}}
+\definecolor{mygray}{gray}{0.87}
+% \definecolor{shadecolor}{lightgray}{0.3}
+
+\usepackage{comment}
+
+
+\newenvironment{protocol}[1][htb]{%
+    \floatname{algorithm}{Protocol}% Update algorithm name
+   \begin{algorithm}[#1]%
+  }{\end{algorithm}}
+
+\usepackage{tikz}

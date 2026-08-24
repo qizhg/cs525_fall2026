@@ -1,0 +1,56 @@
+\title{Homework 1}
+% \author{Qi Zhang}
+\date{{\em See Canvas for due date and time}}
+
+% \paragraph{Submission instruction.}
+% You need to submit the following file(s) to Canvas:
+% \begin{itemize}
+%     \item A pdf file named as hw1.pdf containing your answers to written problems 1 and 3.
+    
+%     \item A ipynb file named hw1.ipynb.
+%     This file is modified from the original hw1.ipynb to include your answers on problem 2. 
+% \end{itemize}
+
+Please be aware of our {\em AI policy} per the course syllabus.
+
+\section{Bellman Optimality Equation}
+Read lecture1.pdf on Canvas carefully. 
+
+% \begin{enumerate}[label=(\alph*)]
+% \item 
+{[6 points]} Provide your justification for the derivation steps in the proof of Proposition 1 lableled as (1a)-1(f), 1 point each.
+% \end{enumerate}
+
+\section{Implementing MDP and Planning Algorithms}
+Read and modify the provided hw1.ipynb file to implement the following functions therein:
+\begin{enumerate}[label=(\alph*)]
+\item {[2 points]} Method \texttt{step} in class \texttt{SimulatorFiniteHorizonMDP}.
+\item {[2 points]} Method \texttt{solve\_bellman\_equation} in class \texttt{FiniteHorizonMDPPlanner}.
+\item {[2 points]} Method \texttt{solve\_bellman\_optimality\_equation} in class \texttt{FiniteHorizonMDPPlanner}.
+\item {[2 points]} Method \texttt{get\_transition} in class \texttt{FiniteHorizonCombinationLock}.
+\end{enumerate}
+Do not modify any things other than the functions above. 
+The original hw1.ipynb file provides a test at the end, which only serves as a reference for grading.
+
+\section{The Infinite-Horizon Setting}
+In our class and lecture1.pdf, we have focused only on the finite-horizon setting.
+An alternative (and perhaps even more popular) setting is the infinite-horizon discounted-reward setting, where an MDP is specified by tuple $M=(\mathcal{S}, \mathcal{A}, P, R, \gamma)$, where $\mathcal{S}$, $\mathcal{A}$, $P$, $R$ are still the state space, the action space, the transition function, and the reward function, respectively; $\gamma\in[0,1)$ is the {\em discounting factor} that replaces horizon $H$ in the finite-horizon setting. 
+In this setting, we usually assume $P$ and $R$ are stationary, i.e., they remain the same for different timesteps, and as a result, we can drop the subscript $h$.
+The agent starts at some state $s_1$; at each time step $h=1,2, \ldots$, the agent takes an action $a_h \in \mathcal{A}$, obtains the immediate reward $r_h=R\left(s_h, a_h\right)$, and observes the next state $s_{h+1}$ sampled from $P\left(s_h, a_h\right)$.
+
+Read a reference text on this setting (e.g., 
+\href{https://nanjiang.cs.illinois.edu/files/cs542f22/note1.pdf}{this note},
+Chapter 2 of \href{https://sites.ualberta.ca/~szepesva/papers/RLAlgsInMDPs.pdf}{this book},
+or Chapter 3 of \href{https://web.stanford.edu/class/psych209/Readings/SuttonBartoIPRLBook2ndEd.pdf}{this book})
+and answer the following questions.
+
+\begin{enumerate}[label=(\alph*)]
+\item {[2 points]} For a (stochastic and stationary) policy $\pi:\mathcal{S}\to\Delta(\mathcal{A})$, what is the (mathematical) definition of its value functions $V^\pi$ and $Q^\pi$?
+
+\item {[2 points]} Write down the Bellman equations that $V^\pi$ and $Q^\pi$ satisfy.
+
+\item {[2 points]} Write down a pseudocode of the so-called {\em policy iteration} algorithm and describe what it is used for.
+\end{enumerate}
+
+
+
