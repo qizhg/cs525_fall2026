@@ -1,4 +1,4 @@
-.DS_Store
+main.pdf
 
 *.aux
 *.bbl
@@ -8,3 +8,5 @@
 *.log
 *.out
 *.synctex.gz
+
+.DS_Store
