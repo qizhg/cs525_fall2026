@@ -1,0 +1,49 @@
+\title{Homework 2}
+\date{{\em See Canvas for due date and time}}
+
+% \paragraph{Submission instruction.}
+% You need to submit the following file(s) to Canvas:
+% \begin{itemize}
+%     \item A pdf file named hw2.pdf containing your answers for problems 2 and 3.
+    
+%     \item A ipynb file named hw2.ipynb.
+%     This file is modified from the original hw2.ipynb to include your answers for problem 1. 
+% \end{itemize}
+
+Please be aware of our {\em AI policy} per the course syllabus.
+
+\section{Implementing MCTS}
+Read and modify the provided hw2.ipynb file to implement the following methods therein.
+It is recommended to read lecture2a.pdf on Canvas or an equivalent as a reference for your implementation.
+\begin{enumerate}[label=(\alph*)]
+\item {[1 point]} \texttt{tree\_policy} in class \texttt{MCTS} when transition $(s,a,s')$ is already in the tree.
+\item {[1 point]} \texttt{tree\_policy} in class \texttt{MCTS} when transition $(s,a,s')$ is unseen in the tree.
+\item {[2 points]} \texttt{best\_action} in class \texttt{MCTS}.
+\item {[2 points]} \texttt{search} in class \texttt{MCTS}.
+\item {[2 points]} \texttt{select\_action} in class \texttt{UCT}.
+\end{enumerate}
+The original hw2.ipynb file provides a test at the end, which only serves as a reference for grading.
+After implementing all methods above, run the test and answer the following question:
+\begin{enumerate}[label=(\alph*)]
+\setcounter{enumi}{5}
+\item {[2 points]} Can you briefly summarize your test result and interpret it?
+\end{enumerate}
+
+
+\section{Analysis of MAB Algorithms}
+Read lecture3a.pdf on Canvas carefully.
+\begin{enumerate}[label=(\alph*)]
+\item {[8 points]} Answer the questions tagged as (1a)-(1d) in lecture3a.pdf, 2 points each.
+The questions are \ul{\em underlined and in italics}.
+\end{enumerate}
+
+\section{Policy Optimization, Implmenting PPO}
+\begin{enumerate}[label=(\alph*)]
+\item {[3 points]} Read lecture3c.pdf on Canvas and justify the derivations tagged as {\bf 2a-2c} therein, 1 points each.
+\item {[9 points]} Read hw3.ipynb that implements a simplified version of PPO.
+Fill in your implementation of the unfinished methods therein.
+Details can be found in hw3.ipynb.
+\end{enumerate}
+
+
+
