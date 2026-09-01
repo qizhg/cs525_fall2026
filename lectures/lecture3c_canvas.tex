@@ -59,11 +59,11 @@ The policy gradient can then be computed as
 \nabla J(\pi) =&~ \nabla \E_{\tau\sim\pi}\left[R(\tau)\right] \nonumber\\
 =&~ \nabla \left(\sum_{\tau} R(\tau) P^\pi(\tau)\right)\nonumber\\
 =&~\sum_\tau R(\tau) \nabla P^\pi(\tau) \nonumber\\
-=&~\sum_\tau R(\tau) P^\pi(\tau) \nabla \log P^\pi(\tau)  \qquad\text{\bf(Homework 2's 2a)}\nonumber\\
+=&~\sum_\tau R(\tau) P^\pi(\tau) \nabla \log P^\pi(\tau)  \qquad\text{\bf(Homework 2's 3a)}\nonumber\\
 =&~\sum_\tau R(\tau) P^\pi(\tau) \nabla \log \Big(d_0(s_0) \pi(a_0 | s_0) P\left(s_1 \mid s_0, a_0\right) \cdots \pi(a_{H-1} | s_{H-1})\Big) \nonumber\\
 =&~\sum_\tau R(\tau) P^\pi(\tau) \textstyle\nabla\left(\log d_0(s_0)+\sum_{h=0}^{H-1} \log \pi(a_h | s_h)+\sum_{h=0}^{H-1} \log P\left(s_{h+1} \mid s_h, a_h\right)\right) \nonumber\\
 =&~\sum_\tau R(\tau) P^\pi(\tau) \textstyle\nabla\left(\sum_{h=0}^{H-1} \log \pi(a_h | s_h)\right)
-\qquad\text{\bf(Homework 2's 2b)}
+\qquad\text{\bf(Homework 2's 3b)}
 \label{eq:PG_REINFORCE}\\ 
 =&~\mathbb{E}_{\tau \sim \pi}\Big[\underbrace{R(\tau) \textstyle\sum_{h=0}^{H-1} \nabla \log \pi(a_h | s_h)}_{\widehat{g}^{\text{ REINFORCE-1}}(\tau)}\Big]
 \label{eq:REINFORCE-1}
@@ -153,7 +153,7 @@ We proceed as
     J(\pi_\theta) - J(\pi_{\theta_{\text{old}}})=&~ \E_{(s,a)\sim d^{\pi_\theta}}\left[A^{\pi_{\theta_{\text{old}}}}(s,a)\right]\\
     =&~\E_{s\sim d^{\pi_\theta},~ a\sim\pi_\theta(s)}\left[A^{\pi_{\theta_{\text{old}}}}(s,a)\right]
     ~~\text{($d^{\pi_\theta}$ is abused as the marginal state distribution)}\\
-    =&~\E_{s\sim d^{\pi_\theta},~ a\sim\pi_{\theta_{\text{old}}}(s)}\left[\frac{\pi_\theta(a|s)}{\pi_{\theta_{\text{old}}}(a|s)}A^{\pi_{\theta_{\text{old}}}}(s,a)\right] \qquad\text{\bf(Homework 2's 2c)} \\
+    =&~\E_{s\sim d^{\pi_\theta},~ a\sim\pi_{\theta_{\text{old}}}(s)}\left[\frac{\pi_\theta(a|s)}{\pi_{\theta_{\text{old}}}(a|s)}A^{\pi_{\theta_{\text{old}}}}(s,a)\right] \qquad\text{\bf(Homework 2's 3c)} \\
     \approx&~\E_{s\sim d^{\pi_{\theta_{\text{old}}}},~ a\sim\pi_{\theta_{\text{old}}}(s)}\left[\frac{\pi_\theta(a|s)}{\pi_{\theta_{\text{old}}}(a|s)}A^{\pi_{\theta_{\text{old}}}}(s,a)\right]\\
     =&~ \E_{(s,a)\sim d^{\pi_{\theta_{\text{old}}}}}\left[\frac{\pi_\theta(a|s)}{\pi_{\theta_{\text{old}}}(a|s)}A^{\pi_{\theta_{\text{old}}}}(s,a)\right] =: L(\theta)
 \end{align*}
