@@ -13,3 +13,5 @@ __pycache__/
 
 labs/modernai/*.json
 labs/modernai/*.pth
+
+main.pdf
