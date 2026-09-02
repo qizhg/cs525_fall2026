@@ -9,3 +9,7 @@
 
 .DS_Store
 __pycache__/
+
+
+labs/modernai/*.json
+labs/modernai/*.pth
