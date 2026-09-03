@@ -39,7 +39,7 @@ Expansion grows the tree, often by one leaf per iteration. We hope that each nod
 Selection and Expansion together are sometimes referred to as Tree Policy.
 Simulation aims to choose actions quickly, usually by some heuristics or just random action selection.
 Various algorithmic choices for these procedures give rise to specific instantiations.
-Sections \ref{sec:AlphaGo Zero} and \ref{sec:UCT} respectively discuss two well-known instantiations from this template, UCT and AlphaZero.
+Section \ref{sec:UCT} discusses a well-known instantiation of this template, UCT.
 
 \subsection*{Implementation details}
 As above, the algorithmic description of MCTS is often based on the data structure of {\em state node}: a node is associated with a state $s$ along paths in the tree that visit this node, with its children indexed by $(a,s')$ for a transition of $(s,a,s')$.
