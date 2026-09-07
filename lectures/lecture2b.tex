@@ -1,0 +1,193 @@
+\title{Lecture 2b: Generative Models - Tabular Certainty-Equivalence RL}
+\author{Qi Zhang}
+\date{Last Updated: September 2025}
+
+\section{Concentration Inequalities and Union Bound}
+
+\begin{theorem}
+[The union bound]
+\label{theorem:The union bound}
+Let $E_1, E_2, \ldots, E_n$ be a collection of events. Then,
+\begin{align*}
+\Pr\left(\bigcup_{i=1}^n E_i\right) \leq \sum_{i=1}^n \Pr\left(E_i\right)
+.
+\end{align*}
+Additionally, if $E_1, E_2, \ldots$ is a countably infinite collection of events, then:
+\begin{align*}
+\Pr\left(\bigcup_{i=1}^{\infty} E_i\right) \leq \sum_{i=1}^{\infty} \Pr\left(E_i\right)
+.
+\end{align*}
+\end{theorem}
+
+\begin{theorem}
+[Hoeffding's inequality]
+\label{theorem:Hoeffding's inequality}
+Let $n$ be a constant and $X_1, \ldots, X_n$ be independent random variables on $\R$ such that $X_i$ is bounded in $\left[a_i, b_i\right]$. Let $S_n:=\sum_{i=1}^n X_i$. Then for all $t>0$,
+\begin{align*}
+\Pr\left(S_n-\E\left[S_n\right] \geq t\right) \leq e^{-2 t^2 / \sum_{i=1}^n\left(b_i-a_i\right)^2}.
+\end{align*}
+\end{theorem}
+
+\paragraph{Remarks:}
+\begin{itemize}
+    \item Applying Theorem \ref{theorem:Hoeffding's inequality} to $\{-X_i\}_{i=1}^n$, we obtain the other one-sided inequality:
+    $\Pr\left(S_n-\E\left[S_n\right] \leq-t\right) \leq e^{-2 t^2 / \sum_{i=1}^n\left(b_i-a_i\right)^2}$.
+    Applying the union bound to both one-sided inequalities, we obtain the often used two-sided bound:
+    $\Pr\left(\left|S_n-\E\left[S_n\right]\right| \geq t\right) \leq 2 e^{-2 t^2 / \sum_{i=1}^n\left(b_i-a_i\right)^2}$.
+    \item When all variables share the same support $[a,b]$ and we compare the empirical average with the true mean, the two-sided bound reduces to
+    \begin{align*}
+        \Pr\left(\left|\frac{S_n}{n}-\frac{\E\left[S_n\right]}{n}\right| \geq t\right) \leq 2 e^{-2 n t^2 / \left(b-a\right)^2}.
+    \end{align*}
+    Setting $\delta:=2 e^{-2 n t^2 / \left(b-a\right)^2}$ to be the probability of failure and solving it for $t$, we can rephrase the result as follows: 
+    \begin{align*}
+        \text{With probability $\geq1-\delta$}, \quad \left|\frac{S_n}{n}-\frac{\E\left[S_n\right]}{n}\right| \leq(b-a) \sqrt{\frac{1}{2 n} \ln \frac{2}{\delta}}.
+    \end{align*}
+    \item The number of variables, $n$, is a constant in the theorem statement. When $n$ is a random variable, Hoeffding's inequality still applies if $n$ does not depend on the realization of $X_1, \ldots, X_n$. Otherwise, Hoeffding's inequality can be used with the union bound over possible realizations of $n$.
+    [Nan's note2]
+\end{itemize}
+
+\begin{theorem}
+[Bernstein's inequality]
+\label{theorem:Bernstein's inequality}
+Let $n$ be a constant and $X_1, \ldots, X_n$ be independent random variables such that, with probability $1, |X_i- \E\left[X_i\right] | \leq R$. Let $\operatorname{Var}\left(X_i\right) \leq \sigma_i^2$ and $S_n:=\sum_{i=1}^n X_i$. Then, for all $t \geq 0$,
+\begin{align*}
+    \Pr\left(S_n-\E\left[S_n\right] \geq t\right) \leq \exp \left(\frac{-t^2}{2 \sum_{i=1}^n \sigma_i^2+\frac{2}{3} R t}\right)
+    .
+\end{align*}
+
+\end{theorem}
+
+\subsection{Examples}
+Coin toss;
+\href{https://courses.cs.washington.edu/courses/cse312/20su/files/student_drive/6.3.pdf}{this one}
+
+
+\section{Tabular Certainty-Equivalence with Generative Models}
+Certainty-equivalence is a {\em model-based} method that estimates unknown quantities of the MDP of interest from data and performs policy optimization with the estimation as if it were true.
+Certainty-equivalence explicitly stores an estimated MDP and performs planning after all the data are collected.
+
+This note focuses on the setting where (only) the transition function $P$ of an finite-horizon MDP $M=(\mathcal{S},\mathcal{A}, P, R, H)$ is unknown but can be queried as a generative model to draw samples $s'\sim P_h(s,a)$ for any $(s,a,h)$.
+As the problem is still non-trivial even when reward function $R$ is known, we therefore assume it is known for simplicity.
+To identify an (near-)optimal policy for $M$, we can estimate $P$ from samples from it.
+If we query the $(s,a,h)$ tuple $n_{s,a,h}$ times and get next-state samples $\{s'_i\}_{i=1}^{n_{s,a,h}}$, {\em tabular} certainty-equivalence estimates $P_h(s,a)$ as 
+\begin{align*}
+    \widehat{P}_h\left(s' | s, a\right)=\frac{1}{n_{s,a,h}} \sum_{i=1}^{n_{s,a,h}} \mathbf{1}\left[s_i'=s'\right] .
+\end{align*}
+We assume every $(s,a,h)$ gets the same number of next-state samples and write $n\equiv n_{s,a,h}$. This way, we obtain the estimated MDP $\widehat{M}:=(\mathcal{S},\mathcal{A}, \widehat{P}, R, H)$ and its optimal policy $\widehat{\pi}$ as a function of $n$.
+We are interested in providing high probability guarantees for the quality of $\widehat{\pi}$ in the original MDP.
+Specifically, we aim to show, when $n$ is large, $V^{M,\pi^*}_1(s_1) - V^{M,\widehat{\pi}}_1(s)$ is small with high probability for any initial state $s$, where $\pi^*$ is an optimal policy for $M$.
+
+\subsection{Coarse analysis}
+
+Intuitively, $V^{M,\pi^*} - V^{M,\widehat{\pi}}$ is small because, when $n$ is large, $\widehat{P}\approx P$ and therefore $\widehat{M}\approx M$, so $\widehat{\pi}$ that is optimal for $\widehat{M}$ should be near-optimal for $M$.
+This reasoning can be formalized using the following error decomposition:
+\begin{align*}
+&V^{M,\pi^*}_1(s) - V^{M,\widehat{\pi}}_1(s) \\
+=&V^{M,\pi^*}_1(s) -V^{\widehat{M},\pi^*}_1(s) + \underbrace{V^{\widehat{M},\pi^*}_1(s)-V^{\widehat{M},\widehat{\pi}}_1(s)}_{\text{$\leq0$ as $\widehat{\pi}$ is optimal for $\widehat{M}$}}+ V^{\widehat{M},\widehat{\pi}}_1(s) - V^{M,\widehat{\pi}}_1(s)\\
+\leq& \underbrace{V^{M,\pi^*}_1(s) -V^{\widehat{M},\pi^*}_1(s)}_{\rm (i)} + \underbrace{V^{\widehat{M},\widehat{\pi}}_1(s) - V^{M,\widehat{\pi}}_1(s)}_{\rm (ii)}
+.
+\end{align*}
+\paragraph{The simulation lemma.}
+Terms (i) and (ii) are small because of the same reason:
+whenever the two MDPs $M$ and $\widehat{M}$ close (in terms of their transition functions), the two value functions of following the same policy are also close.
+This statement is made precise by Lemma \ref{lemma:Simulation lemma} known as the simulation lemma, where we use the following notation:
+$P_h$ is treated as a matrix of shape $|\mathcal{S}\times\mathcal{A}|\times\mathcal{S}$ with entries $P_h(s'|s,a)$ where $(s,a)$ indexing rows and $s'$ indexing columns; 
+value function $V_h$ is treated as a column vector of shape $|\mathcal{S}|$ with its $s$-th entry being $V_h(s)$.
+Therefore, $P_hV_{h+1}$ is a matrix-vector product yielding a vector of size $|\mathcal{S}\times\mathcal{A}|$ with the $(s,a)$-th entry
+\begin{align*}
+    [P_hV_{h+1}]_{(s,a)} = \sum_{s'\in\mathcal{S}}P_h(s'|s,a)V_{h+1}(s') = \E_{s'\sim P_h(s,a)}[V_{h+1}(s')]
+    .
+\end{align*}
+\begin{lemma}[Simulation lemma]
+\label{lemma:Simulation lemma}
+Let MDPs $M$ and $\widehat{M}$ differ only by their transition functions $P$ and $\widehat{P}$. For any policy $\pi$ and $(s, h)$, we have
+\begin{align*}
+V_h^{M, \pi}(s)-V_h^{\widehat{M}, \pi}(s) & =\sum_{i=h}^H \E_{\left(s_i, a_i\right) \sim M, \pi | s_h=s}\left[\left[\left(P_i-\widehat{P}_i\right) V_{i+1}^{\widehat{M}, \pi}\right]_{(s_i,a_i)}\right] \\
+& =\sum_{i=h}^H \E_{\left(s_i, a_i\right) \sim \widehat{M}, \pi | s_h=s}\left[\left[\left(P_i-\widehat{P}_i\right) V_{i+1}^{M, \pi}\right]_{(s_i,a_i)}\right]
+.
+\end{align*}
+\end{lemma}
+The statement of Lemma \ref{lemma:Simulation lemma} quantifies the discrepancy between the value functions by the discrepancy between the transition functions of the two MDPs, which is precisely what we need.
+
+\paragraph{Concentration of $\widehat{P}\approx P$.}
+We will assume reward is bounded and, without loss of generality, bounded in $[0,1]$, i.e., $R_h(s,a)\in[0,1]$ for any $(s,a,h)$.
+Therefore, the value function is bounded as $V^\pi_h(s)\in[0,H]$ for any $\pi,h$ and therefore $\norm{V^\pi_h}_\infty:=\max_{s} V^\pi_h(s) \leq H$.
+Noting $\left[\left(P_h-\widehat{P}_h\right) V\right]_{(s,a)}\leq\norm{{P}_h(s, a)-\widehat{P}_h(s, a)}_1\cdot \norm{V}_\infty$ by Cauchy–Schwarz (the dual norm form), it therefore suffices to provide a high probability guarantee of the $\ell_1$ norm when $n$ is large, which we give here using Hoeffding's inequality with the union bound:
+\begin{enumerate}[label={(\arabic*)}]
+    \item \label{item:fixing (s,a,h,s')}
+    Fixing any $(s, a, h, s')$, define random variables $X_i:=\mathbf{1}[s'_i=s'], i=1,\ldots,n$ for the $n$ next-state samples, so that we have $\frac{S_n}{n}=\widehat{P}_h(s' | s, a)$, and $\frac{\E[S_n]}{n}=P_h\left(s' | s, a\right)$ with $S_n:=\sum_{i=1}^n X_i$.
+    $X_1,\ldots,X_n$ satisfy the condition of Hoeffding's inequality, so we have: With probability $\geq 1-\delta$, $\left|\widehat{P}_h\left(s'| s, a\right)-P_h\left(s'| s, a\right)\right| \leq \sqrt{\frac{1}{2 n} \ln \left(\frac{2}{\delta}\right)}$.
+    \item \label{item:fixing (s,a,h)}
+    Fix any $(s,a,h)$ and apply the union bound over all $s'\in\mathcal{S}$. To achieve failure probability of $\delta$, we split the $\delta$ in step \ref{item:fixing (s,a,h,s')} evenly among all $s'$ (i.e., change $\delta \to \delta/|\mathcal{S}|$): With probability $\geq 1-\delta$,
+    \begin{align*}
+    &\abs{\widehat{P}_h\left(s'| s, a\right)-P_h\left(s'| s, a\right)} \leq \sqrt{\frac{1}{2 n} \ln \left(\frac{2}{\delta/|\mathcal{S}|}\right)} \quad \text{{\em for all} $s'\in\mathcal{S}$} \\
+    \Longrightarrow& \norm{{P}_h(s, a)-\widehat{P}_h(s, a)}_1 = \sum_{s'\in\mathcal{S}} \abs{\widehat{P}_h\left(s'| s, a\right)-P_h\left(s'| s, a\right)} \leq |\mathcal{S}|  \sqrt{\frac{1}{2 n} \ln \left(\frac{2|\mathcal{S}|}{\delta}\right)}
+    .
+    \end{align*}
+    
+    \item \label{item:uniform concentration}
+    We then apply the union bound over all $(s,a,h)$ on top of step \ref{item:fixing (s,a,h)}.
+    To achieve failure probability of $\delta$,
+    we split the $\delta$ in step \ref{item:fixing (s,a,h)} evenly among all $(s,a,h)$: With probability $\geq 1-\delta$,
+    \begin{align*}
+    &\norm{{P}_h(s, a)-\widehat{P}_h(s, a)}_1 \leq |\mathcal{S}|  \sqrt{\frac{1}{2 n} \ln \left(\frac{2|\mathcal{S}|}{\delta/(|\mathcal{S}||\mathcal{A}|H)}\right)}\quad\text{{\em for all } $(s,a,h)$}.
+    \end{align*}
+\end{enumerate}
+
+\paragraph{Putting it together.}
+We are ready to make the following statement for terms (i) and (ii) :
+With probability $\geq 1-\delta$,
+\begin{align*}
+    {\rm (i)}:=& V^{M,\pi^*}_1(s) -V^{\widehat{M},\pi^*}_1(s) \\
+    =& \sum_{h=1}^H \E_{\left(s_h, a_h\right) \sim M, \pi^* | s_1=s}\left[\left[\left(P_h-\widehat{P}_h\right) V_{h+1}^{\widehat{M}, \pi^*}\right]_{(s_h,a_h)}\right] \quad\text{(The simulation lemma)}\\
+    \leq& \sum_{h=1}^H \E_{\left(s_h, a_h\right) \sim M, \pi^* | s_1=s}\left[\norm{{P}_h(s_h, a_h)-\widehat{P}_h(s_h, a_h)}_1 \cdot \norm{V_{h+1}^{\widehat{M}, \pi^*}}_\infty\right] \quad\text{(Cauchy–Schwarz)}\\
+    \leq& \sum_{h=1}^H \E_{\left(s_h, a_h\right) \sim M, \pi^* | s_1=s}\left[|\mathcal{S}|  \sqrt{\frac{1}{2 n} \ln \left(\frac{2|\mathcal{S}|}{\delta/(|\mathcal{S}||\mathcal{A}|H)}\right)} \cdot H\right] \quad\text{(Step \ref{item:uniform concentration} + bounded reward)}\\
+    =& |\mathcal{S}| H^2  \sqrt{\frac{1}{2 n} \ln \left(\frac{2|\mathcal{S}|^2|\mathcal{A}|H}{\delta}\right)} =: \epsilon(n,\delta)
+\end{align*}
+and ${\rm (ii)}\leq\epsilon(n,\delta)$ for the same reason.
+
+
+To achieve an total error for $\epsilon$, we can choose $n$ large enough such that $\epsilon(n,\delta) \leq \epsilon/2$, which leads to Proposition \ref{proposition:coarse_analysis}.
+\begin{proposition}
+\label{proposition:coarse_analysis}
+Given any $(\epsilon,\delta)$ choosing $n$ large enough such that $\epsilon(n,\delta)\leq \epsilon/2$, with probability $\geq 1-\delta$, we have
+$V^{M,\pi^*}_1(s) - V^{M,\widehat{\pi}}_1(s) \leq \epsilon$ for all initial state $s$.
+\end{proposition}
+
+\subsection{Sharper analyses}
+
+\section{Proof of Lemma \ref{lemma:Simulation lemma} (The Simulation Lemma)}
+We will prove the first equality below; the second can be obtained by the relabeling of $(M, \widehat{M})\to(\widehat{M}, M)$.
+The key idea is to unroll the timesteps using the Bellman equations.
+
+Without loss of generality, we will show the case of $h=1$.
+Writing $s_1\equiv s$, we have
+\begin{align*}
+&V_1^{M, \pi}(s_1)-V_1^{\widehat{M}, \pi}(s_1)\\
+=& \E_{a_1 \sim \pi_1(s_1)}\left[Q_1^{M, \pi}\left(s_1, a_1\right)\right]-\E_{a_1 \sim \pi_1(s_1)}\left[Q_1^{\widehat{M}, \pi}\left(s_1, a_1\right)\right]\\
+=& \E_{a_1 \sim \pi_1(s_1)}\left[R_1(s_1, a_1)+\left[P_1 V_2^{M, \pi}\right]_{(s_1, a_1)}\right]-\E_{a_1 \sim \pi_1(s_1)}\left[R_1(s_1, a_1)+\left[\widehat{P}_1 V_2^{\widehat{M}, \pi}\right]_{(s_1, a_1)}\right]\\
+=&\E_{a_1 \sim \pi_1(s_1)}\left[\left[P_1 V_2^{M, \pi}-\widehat{P}_1 V_2^{\widehat{M}, \pi}\right]_{\left(s_1, a_1\right)}\right]\\
+=&\E_{a_1 \sim \pi_1(s_1)}\left[\left[P_1 V_2^{M, \pi}-P_1 V_2^{\widehat{M}, \pi}+P_1 V_2^{\widehat{M}, \pi}-\widehat{P}_1 V_2^{\widehat{M}, \pi}\right]_{\left(s_1, a_1\right)}\right]\\
+=&\underbrace{\E_{a_1 \sim \pi_1(s_1)}\left[\left[P_1 \left(V_2^{M, \pi}-V_2^{\widehat{M}, \pi}\right)\right]_{\left(s_1, a_1\right)}\right]}_{\rm (i)} + \underbrace{\E_{a_1 \sim \pi_1(s_1)}\left[\left[\left(P_1 -\widehat{P}_1\right) V_2^{\widehat{M}, \pi}\right]_{\left(s_1, a_1\right)}\right]}_{\rm (ii)}
+\end{align*}
+At this point, note term (ii) is the very first summand of the RHS in the lemma's first equality (i.e., our goal).
+For term (i), we have
+\begin{align*}
+    {\rm (i)} =& \E_{a_1 \sim \pi_1(s_1)}\left[\E_{s_2\sim P_1(s_1,a_1)}\left[V_2^{M, \pi}(s_2)-V_2^{\widehat{M}, \pi}(s_2)\right]\right]\\
+    =& \E_{s_2\sim M, \pi | s_1} \left[V_2^{M, \pi}(s_2)-V_2^{\widehat{M}, \pi}(s_2)\right]
+\end{align*}
+where $V_2^{M, \pi}(s_2)-V_2^{\widehat{M}, \pi}(s_2)$ can be expanded the same way as $V_1^{M, \pi}(s_1)-V_1^{\widehat{M}, \pi}(s_1)$ above.
+Recursively expanding all the way down to the last timestep $H$, we obtain 
+\begin{align*}
+    &V_1^{M, \pi}(s_1)-V_1^{\widehat{M}, \pi}(s_1) \\
+    =& \underbrace{\E_{s_H, a_H \sim M, \pi | s_1}\left[\left[P_H \left(V_{H+1}^{M, \pi}-V_{H+1}^{\widehat{M}, \pi}\right)\right]_{\left(s_H, a_H\right)}\right]}_{\text{$=0$ as $V_{H+1}^{M, \pi}=V_{H+1}^{\widehat{M}, \pi}=0$}}
+    + \sum_{h=1}^H \E_{\left(s_h, a_h\right) \sim M, \pi | s_1}\left[\left[\left(P_h-\widehat{P}_h\right) V_{h+1}^{\widehat{M}, \pi}\right]_{(s_h,a_h)}\right]
+\end{align*}
+which completes the proof.
+
+
+
+
+
+
+

@@ -136,7 +136,7 @@ Therefore,
 UCT \cite{uct}, Upper Confidence Bounds (UCB) applied to Trees, applies the UCB algorithm \cite{ucb} to the Selection procedure of MCTS to balance the exploration-exploitation tradeoff.
 Specifically, UCT's Selection selects the action at each (V-)node $\tau$ (line \ref{alg:mcts_procedures:line:SelectAction} in Algorithm \ref{alg:mcts_procedures}) that maximizes the upper confidence bound on the estimated total reward from that node:
 \begin{align*}
-    \argmax_{a\in\mathcal{A}} \quad {\rm UCB}(\tau,a):= \frac{G^{\rm total}_{\tau,a}}{N_{\tau,a}} + c\sqrt{\frac{\ln(N_s)}{N_{\tau,a}}}
+    \argmax_{a\in\mathcal{A}} \quad {\rm UCB}(\tau,a):= \frac{G^{\rm total}_{\tau,a}}{N_{\tau,a}} + c\sqrt{\frac{\ln(N_\tau)}{N_{\tau,a}}}
 \end{align*}
 where $c>0$ is a hyperparameter controlling how much exploration is favored over exploitation. 
 
